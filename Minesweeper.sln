@@ -1,0 +1,42 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.10.35013.160
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{6EC3EE1D-3C4E-46DD-8F32-0CC8E7565705}") = "Minesweeper", "Minesweeper\Minesweeper.fsproj", "{4D1D9DDB-5BC1-4FE5-A666-8C1EDEBC8519}"
+EndProject
+Project("{6EC3EE1D-3C4E-46DD-8F32-0CC8E7565705}") = "GUI", "GUI\GUI.fsproj", "{ABBE4283-0F7D-4FFF-A3F7-EB04E1F57BF9}"
+EndProject
+Project("{6EC3EE1D-3C4E-46DD-8F32-0CC8E7565705}") = "CLI", "CLI\CLI.fsproj", "{D3F6ADD1-F2FE-4678-B3F9-24BB96781BD1}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{F900F42F-DC29-4378-9A63-18C3227B7C40}"
+	ProjectSection(SolutionItems) = preProject
+		.gitignore = .gitignore
+	EndProjectSection
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{4D1D9DDB-5BC1-4FE5-A666-8C1EDEBC8519}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4D1D9DDB-5BC1-4FE5-A666-8C1EDEBC8519}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4D1D9DDB-5BC1-4FE5-A666-8C1EDEBC8519}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4D1D9DDB-5BC1-4FE5-A666-8C1EDEBC8519}.Release|Any CPU.Build.0 = Release|Any CPU
+		{ABBE4283-0F7D-4FFF-A3F7-EB04E1F57BF9}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{ABBE4283-0F7D-4FFF-A3F7-EB04E1F57BF9}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{ABBE4283-0F7D-4FFF-A3F7-EB04E1F57BF9}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{ABBE4283-0F7D-4FFF-A3F7-EB04E1F57BF9}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D3F6ADD1-F2FE-4678-B3F9-24BB96781BD1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D3F6ADD1-F2FE-4678-B3F9-24BB96781BD1}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D3F6ADD1-F2FE-4678-B3F9-24BB96781BD1}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D3F6ADD1-F2FE-4678-B3F9-24BB96781BD1}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {70A78F1C-2058-4FC6-AC28-67B03494C8AF}
+	EndGlobalSection
+EndGlobal
