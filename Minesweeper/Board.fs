@@ -31,37 +31,36 @@ type private HiddenCell =
 
 [<Struct>]
 type private Minefield =
-    | Initialized of field: HiddenCell array2d
+    | Initialized of minefield: HiddenCell array2d
     | Uninitialized of minesCount: int
 
 type Board = 
-  private // TODO: Fix ident
-    { visibleCells: VisibleCell array2d
-      hiddenCells: Minefield }
+    private
+        { visibleCells: VisibleCell array2d
+          minefield: Minefield }
       
     static member Create dimensions minesCount =
         { visibleCells = Array2D.create dimensions.Height dimensions.Width Closed
-          hiddenCells = Uninitialized minesCount }
+          minefield = Uninitialized minesCount }
 
     member this.Dimensions =
         { Height = Array2D.length1 this.visibleCells
           Width = Array2D.length2 this.visibleCells }
 
-    member this.LeftoverMines =
-        let minesCount =
-            match this.hiddenCells with
-            | Uninitialized minesCount -> minesCount
-            | Initialized field -> 
-                field
-                |> Seq.cast<HiddenCell>
-                |> Seq.sumBy ((=) Mine >> Convert.ToInt32)
+    member this.MarkedCellsCount =
+        this.visibleCells
+        |> Seq.cast<VisibleCell>
+        |> Seq.sumBy ((=) Marked >> Convert.ToInt32)
 
-        let markedMinesCount =
-            this.visibleCells
-            |> Seq.cast<VisibleCell>
-            |> Seq.sumBy ((=) Marked >> Convert.ToInt32)
+    member this.TotalMinesCount =
+        match this.minefield with
+        | Uninitialized minesCount -> minesCount
+        | Initialized minefield -> 
+            minefield
+            |> Seq.cast<HiddenCell>
+            |> Seq.sumBy ((=) Mine >> Convert.ToInt32)
 
-        minesCount - markedMinesCount
+    member this.UnmarkedMinesCount = this.TotalMinesCount - this.MarkedCellsCount
           
     member this.Item with get location = this.visibleCells.GetAt location
     member this.GetRow y = this.visibleCells[y, *]
@@ -69,31 +68,31 @@ type Board =
 exception MineOpened of Location
 
 let rec openCell board location =
-    match board.hiddenCells with
+    match board.minefield with
     | Uninitialized minesCount -> 
-        let hiddenCells = Array2D.create board.Dimensions.Height board.Dimensions.Width Empty
+        let minefield = Array2D.create board.Dimensions.Height board.Dimensions.Width Empty
 
         for mineLocation in (putMines board.Dimensions location minesCount) do
-            hiddenCells.SetAt mineLocation Mine
+            minefield.SetAt mineLocation Mine
     
             mineLocation
             |> getNeigbouringCells board.Dimensions
-            |> Seq.iter (hiddenCells.UpdateAt (
+            |> Seq.iter (minefield.UpdateAt (
                 function
                 | Mine -> Mine
                 | NearMine count -> NearMine count
                 | Empty -> NearMine 1
             ))
 
-        openCell { board with hiddenCells = Initialized hiddenCells } location
-    | Initialized hiddenCells ->
+        openCell { board with minefield = Initialized minefield } location
+    | Initialized minefield ->
         let visibleCells = Array2D.copy board.visibleCells
 
-        if hiddenCells.GetAt location = Mine then
+        if minefield.GetAt location = Mine then
             raise (MineOpened location)
 
         let rec openCellRec location =
-            match hiddenCells.GetAt location with
+            match minefield.GetAt location with
             | Mine -> raise (MineOpened location)
             | NearMine count -> Opened count
             | Empty -> Opened 0

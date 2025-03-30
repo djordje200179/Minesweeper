@@ -45,7 +45,7 @@ let rec gameLoop board =
     Console.Clear()
     printBoard board
 
-    if board.LeftoverMines > 0 then    
+    if board.UnmarkedMinesCount > 0 then    
         inputLocation ()
         |> function
         | Open location -> openCell board location
