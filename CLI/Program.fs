@@ -1,24 +1,59 @@
 ﻿open Minesweeper.Board
-open Minesweeper.Minefield
+open Minesweeper.Utils
+open System
 
-let PrintBoard (board: Board) =
-    let height, width = Array2D.length1 board.Tiles, Array2D.length2 board.Tiles
+let getCellRepresentation cell =
+    match cell with
+    | Closed -> '#'
+    | Marked -> '+'
+    | Opened 0 -> ' '
+    | Opened n -> char (int '0' + n)
+
+let printBoard (board: Board) =
+    let { Height = height; Width = width } = board.Dimensions
+    
+    Seq.init width id
+    |> Seq.map ((+)(int '0') >> char)
+    |> Seq.toArray
+    |> String
+    |> printfn " |%s"
+    printfn "-+%s" (String.replicate width "-")
 
     for y in 0..height-1 do
-        for x in 0..width-1 do
-            if board.Tiles.[y, x] = Opened then
-                match board.Minefield[y, x] with
-                | Clear -> printf " "
-                | Mine -> printf "X"
-                | NearMine n -> printf "%d" n
-            else
-                printf "#"
-        printfn ""
+        board.OvergroundCells[y, *]
+        |> Seq.map getCellRepresentation
+        |> Seq.toArray
+        |> String
+        |> printfn "%d| %s" y
 
-let board = GenerateBoard (10, 10) 10
-PrintBoard board
+let inputLocation () =
+    printf "Enter y and x: "
+    let rowValues = 
+        Console.ReadLine()
+        |> _.Split(' ')
+        |> Array.map int
 
-printfn ""
+    { Y = rowValues.[0]; X = rowValues.[1] }
 
-let board2 = RevealBoard board (2, 2)
-PrintBoard board2
+let playGame dimensions minesCount =
+    let rec gameLoop board =
+        Console.Clear()
+        printBoard board
+
+        if board.LeftoverMines <> 0 then    
+            inputLocation ()
+            |> openCell board
+            |> gameLoop
+
+    inputLocation ()
+    |> generateValidBoard (createEmptyBoard dimensions) minesCount
+    |> gameLoop
+
+let dimensions = { Height = 10; Width = 10 }
+let minesCount = 10
+
+try
+    playGame dimensions minesCount
+with
+| MineOpened location ->
+    printfn "Game over! You opened a mine at %A" location

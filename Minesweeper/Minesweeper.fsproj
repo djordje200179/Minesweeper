@@ -6,7 +6,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Include="Minefield.fs" />
+    <Compile Include="Utils.fs" />
     <Compile Include="Board.fs" />
   </ItemGroup>
 

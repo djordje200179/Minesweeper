@@ -1,40 +1,81 @@
 ﻿module Minesweeper.Board
 
-open Minesweeper.Minefield
+open System
+open Utils
 
-type Cell =
-    | Opened
+[<Struct>]
+type UndergroundCell =
+    | Mine
+    | NearMine of int
+    | Empty
+
+[<Struct>]
+type OvergroundCell =
     | Closed
+    | Marked
+    | Opened of int
 
-type Board = {
-    Tiles: Cell [,]
-    Minefield: Field
-}
+let private putMines dimensions avoidPoint minesCount =
+    let rng = Random()
 
-let GenerateBoard (height: int, width: int) (mines: int): Board =
-    let field = GenerateField (height, width) mines
-    let tiles = Array2D.create height width Closed
+    let rec putMine mines minesLeft =
+        if minesLeft = 0 then mines
+        else
+            let point = { Y = rng.Next dimensions.Height; X = rng.Next dimensions.Width }
+            if (List.contains point mines || point = avoidPoint) then 
+                putMine mines minesLeft
+            else 
+                putMine (point :: mines) (minesLeft - 1)
 
-    { Tiles = tiles; Minefield = field }
+    putMine [] minesCount
 
-let RevealBoard (board: Board) (y: int, x: int): Board = 
-    let rec OpenCell (tiles: Cell [, ]) (y: int, x: int) =
-        let height, width = Array2D.length1 board.Tiles, Array2D.length2 board.Tiles
+type Board = 
+  { OvergroundCells: OvergroundCell array2d
+    UndegroundCells: UndergroundCell array2d }
+    member this.Dimensions =
+        { Height = Array2D.length1 this.UndegroundCells
+          Width = Array2D.length2 this.UndegroundCells }
+          
+    member this.LeftoverMines =
+        this.UndegroundCells
+        |> Seq.cast<UndergroundCell>
+        |> Seq.sumBy ((=) Mine >> Convert.ToInt32)
 
-        if x >= 0 && x < width && y >= 0 && y < height && tiles.[y, x] = Closed then
-            tiles[y, x] <- Opened
+let createEmptyBoard dimension =
+    { OvergroundCells = Array2D.create dimension.Height dimension.Width Closed
+      UndegroundCells = Array2D.create dimension.Height dimension.Width Empty  }
 
-            if board.Minefield[y, x] = Clear then
-                OpenCell tiles (y - 1, x)
-                OpenCell tiles (y + 1, x)
-                OpenCell tiles (y, x - 1)
-                OpenCell tiles (y, x + 1)
-                OpenCell tiles (y - 1, x - 1)
-                OpenCell tiles (y - 1, x + 1)
-                OpenCell tiles (y + 1, x - 1)
-                OpenCell tiles (y + 1, x + 1)
+exception MineOpened of Location
 
-    let newTiles = Array2D.copy board.Tiles
-    OpenCell newTiles (y, x)
+let openCell board location =
+    let newOvergroundCells = Array2D.copy board.OvergroundCells
+    let rec openCellRec location =
+        newOvergroundCells[location.Y, location.X] <- 
+            match board.UndegroundCells[location.Y, location.X] with
+            | Mine -> raise (MineOpened location)
+            | NearMine count -> Opened count
+            | Empty -> Opened 0
 
-    { board with Tiles = newTiles }
+        if newOvergroundCells[location.Y, location.X] = Opened 0 then
+            location
+            |> getNeigbouringCells board.Dimensions
+            |> List.filter (fun location -> newOvergroundCells[location.Y, location.X] = Closed)
+            |> List.iter openCellRec
+
+    openCellRec location
+
+    { board with OvergroundCells = newOvergroundCells }
+
+let generateValidBoard board minesCount avoidPoint =
+    let newUndergroundCells = Array2D.copy board.UndegroundCells
+
+    for mine in (putMines board.Dimensions avoidPoint minesCount) do
+        newUndergroundCells[mine.Y, mine.X] <- Mine
+    
+        for location in (getNeigbouringCells board.Dimensions mine) do
+            newUndergroundCells[location.Y, location.X] <- 
+                match newUndergroundCells[location.Y, location.X] with
+                | Mine -> Mine
+                | NearMine count -> NearMine (count + 1)
+                | Empty -> NearMine 1
+    openCell { board with UndegroundCells = newUndergroundCells } avoidPoint
