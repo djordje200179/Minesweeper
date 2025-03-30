@@ -29,7 +29,7 @@ type private UserAction =
     | Open of Location
     | Mark of Location
 
-let rec private inputLocation () =
+let rec private inputAction () =
     printf "Enter y and x: "
 
     Console.ReadLine()
@@ -39,14 +39,15 @@ let rec private inputLocation () =
     | [| y; x; "m"|] -> Mark { Y = int y; X = int x }
     | _ -> 
         printfn "Invalid input. Please enter two integers separated by a space."
-        inputLocation ()
+        inputAction ()
 
 let rec gameLoop board =
     Console.Clear()
     printBoard board
+    printfn "Mines left: %d" board.UnmarkedMinesCount
 
     if board.UnmarkedMinesCount > 0 then    
-        inputLocation ()
+        inputAction ()
         |> function
         | Open location -> openCell board location
         | Mark location -> markCell board location
