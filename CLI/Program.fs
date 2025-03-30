@@ -55,4 +55,4 @@ try
     playGame dimensions minesCount
 with
 | MineOpened location ->
-    printfn "Game over! You opened a mine at %A" location
+    printfn "Game over! You opened the mine at %O" location
