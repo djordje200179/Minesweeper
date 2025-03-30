@@ -2,19 +2,6 @@
 
 open System
 open Utils
-open System.Diagnostics
-
-[<Struct>]
-type HiddenCell =
-    | Mine
-    | NearMine of int
-    | Empty
-
-[<Struct>]
-type VisibleCell =
-    | Closed
-    | Marked
-    | Opened of int
 
 let private putMines dimensions avoidPoint minesCount =
     let rng = Random()
@@ -30,55 +17,105 @@ let private putMines dimensions avoidPoint minesCount =
 
     putMine [] minesCount
 
-type Board = 
-  { VisibleCells: VisibleCell array2d
-    HiddenCells: HiddenCell array2d }
-    member this.Dimensions =
-        { Height = Array2D.length1 this.HiddenCells
-          Width = Array2D.length2 this.HiddenCells }
-          
-    member this.LeftoverMines =
-        this.HiddenCells
-        |> Seq.cast<HiddenCell>
-        |> Seq.sumBy ((=) Mine >> Convert.ToInt32)
+[<Struct>]
+type VisibleCell =
+    | Closed
+    | Marked
+    | Opened of int
 
-let createEmptyBoard dimension =
-    { VisibleCells = Array2D.create dimension.Height dimension.Width Closed
-      HiddenCells = Array2D.create dimension.Height dimension.Width Empty }
+[<Struct>]
+type private HiddenCell =
+    | Mine
+    | NearMine of int
+    | Empty
+
+[<Struct>]
+type private Minefield =
+    | Initialized of field: HiddenCell array2d
+    | Uninitialized of minesCount: int
+
+type Board = 
+  private // TODO: Fix ident
+    { visibleCells: VisibleCell array2d
+      hiddenCells: Minefield }
+      
+    static member Create dimensions minesCount =
+        { visibleCells = Array2D.create dimensions.Height dimensions.Width Closed
+          hiddenCells = Uninitialized minesCount }
+
+    member this.Dimensions =
+        { Height = Array2D.length1 this.visibleCells
+          Width = Array2D.length2 this.visibleCells }
+
+    member this.LeftoverMines =
+        let minesCount =
+            match this.hiddenCells with
+            | Uninitialized minesCount -> minesCount
+            | Initialized field -> 
+                field
+                |> Seq.cast<HiddenCell>
+                |> Seq.sumBy ((=) Mine >> Convert.ToInt32)
+
+        let markedMinesCount =
+            this.visibleCells
+            |> Seq.cast<VisibleCell>
+            |> Seq.sumBy ((=) Marked >> Convert.ToInt32)
+
+        minesCount - markedMinesCount
+          
+    member this.Item with get location = this.visibleCells.GetAt location
+    member this.GetRow y = this.visibleCells[y, *]
 
 exception MineOpened of Location
 
-let openCell board location =
-    let visibleCells = Array2D.copy board.VisibleCells
-    let rec openCellRec location =
-        match board.HiddenCells.GetAt location with
-        | Mine -> raise (MineOpened location)
-        | NearMine count -> Opened count
-        | Empty -> Opened 0
-        |> visibleCells.SetAt location
+let rec openCell board location =
+    match board.hiddenCells with
+    | Uninitialized minesCount -> 
+        let hiddenCells = Array2D.create board.Dimensions.Height board.Dimensions.Width Empty
 
-        if visibleCells.GetAt location = Opened 0 then
-            location
-            |> getNeigbouringCells board.Dimensions
-            |> List.filter (visibleCells.GetAt >> (=) Closed)
-            |> List.iter openCellRec
-    openCellRec location
-
-    { board with VisibleCells = visibleCells }
-
-let generateValidBoard board minesCount avoidPoint =
-    let hiddenCells = Array2D.copy board.HiddenCells
-
-    for mineLocation in (putMines board.Dimensions avoidPoint minesCount) do
-        hiddenCells.SetAt mineLocation Mine
+        for mineLocation in (putMines board.Dimensions location minesCount) do
+            hiddenCells.SetAt mineLocation Mine
     
-        mineLocation
-        |> getNeigbouringCells board.Dimensions
-        |> Seq.iter (hiddenCells.Update (
-            function
-            | Mine -> Mine
-            | NearMine count -> NearMine count
-            | Empty -> NearMine 1
-        ))
+            mineLocation
+            |> getNeigbouringCells board.Dimensions
+            |> Seq.iter (hiddenCells.UpdateAt (
+                function
+                | Mine -> Mine
+                | NearMine count -> NearMine count
+                | Empty -> NearMine 1
+            ))
 
-    openCell { board with HiddenCells = hiddenCells } avoidPoint
+        openCell { board with hiddenCells = Initialized hiddenCells } location
+    | Initialized hiddenCells ->
+        let visibleCells = Array2D.copy board.visibleCells
+
+        if hiddenCells.GetAt location = Mine then
+            raise (MineOpened location)
+
+        let rec openCellRec location =
+            match hiddenCells.GetAt location with
+            | Mine -> raise (MineOpened location)
+            | NearMine count -> Opened count
+            | Empty -> Opened 0
+            |> visibleCells.SetAt location
+
+            if visibleCells.GetAt location = Opened 0 then
+                location
+                |> getNeigbouringCells board.Dimensions
+                |> List.filter (visibleCells.GetAt >> (=) Closed)
+                |> List.iter openCellRec
+
+        openCellRec location
+
+        { board with visibleCells = visibleCells }
+
+let markCell board location =
+    let visibleCells = Array2D.copy board.visibleCells
+    visibleCells.UpdateAt (
+        function
+        | Closed -> Marked
+        | Marked -> Closed
+        | Opened n -> Opened n
+    ) location
+
+    { board with visibleCells = visibleCells }

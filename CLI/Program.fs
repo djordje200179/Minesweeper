@@ -13,7 +13,7 @@ let private printBoard (board: Board) =
     printfn "-+%s" (String.replicate width "-")
 
     for y in 0..height-1 do
-        board.VisibleCells[y, *]
+        board.GetRow y
         |> Seq.map (
             function
             | Closed -> '#'
@@ -25,34 +25,39 @@ let private printBoard (board: Board) =
         |> String
         |> printfn "%d|%s" y
 
-let private inputLocation () =
+type private UserAction =
+    | Open of Location
+    | Mark of Location
+
+let rec private inputLocation () =
     printf "Enter y and x: "
-    let rowValues = 
-        Console.ReadLine()
-        |> _.Split(' ')
-        |> Array.map int
 
-    { Y = rowValues.[0]; X = rowValues.[1] }
+    Console.ReadLine()
+    |> _.Split(' ')
+    |> function
+    | [| y; x |] -> Open { Y = int y; X = int x }
+    | [| y; x; "m"|] -> Mark { Y = int y; X = int x }
+    | _ -> 
+        printfn "Invalid input. Please enter two integers separated by a space."
+        inputLocation ()
 
-let private playGame dimensions minesCount =
-    let rec gameLoop board =
-        Console.Clear()
-        printBoard board
+let rec gameLoop board =
+    Console.Clear()
+    printBoard board
 
-        if board.LeftoverMines <> 0 then    
-            inputLocation ()
-            |> openCell board
-            |> gameLoop
-
-    inputLocation ()
-    |> generateValidBoard (createEmptyBoard dimensions) minesCount
-    |> gameLoop
+    if board.LeftoverMines > 0 then    
+        inputLocation ()
+        |> function
+        | Open location -> openCell board location
+        | Mark location -> markCell board location
+        |> gameLoop
 
 let dimensions = { Height = 10; Width = 10 }
 let minesCount = 10
 
 try
-    playGame dimensions minesCount
+    Board.Create dimensions minesCount
+    |> gameLoop
 with
 | MineOpened location ->
     printfn "Game over! You opened the mine at %O" location

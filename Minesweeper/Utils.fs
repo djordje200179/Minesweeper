@@ -30,7 +30,7 @@ type internal 'T ``[,]`` with
         this[location.Y, location.X]
     member this.SetAt (location: Location) value =
         this[location.Y, location.X] <- value
-    member this.Update f (location: Location) =
+    member this.UpdateAt f (location: Location) =
         this.GetAt location
         |> f
         |> this.SetAt location
