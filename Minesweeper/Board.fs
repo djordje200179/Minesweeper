@@ -80,7 +80,7 @@ let rec openCell board location =
             |> Seq.iter (minefield.UpdateAt (
                 function
                 | Mine -> Mine
-                | NearMine count -> NearMine count
+                | NearMine count -> NearMine (count + 1)
                 | Empty -> NearMine 1
             ))
 
