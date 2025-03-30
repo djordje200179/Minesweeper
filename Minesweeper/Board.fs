@@ -2,6 +2,7 @@
 
 open System
 open Utils
+open System.Diagnostics
 
 [<Struct>]
 type HiddenCell =
@@ -21,7 +22,7 @@ let private putMines dimensions avoidPoint minesCount =
     let rec putMine mines minesLeft =
         if minesLeft = 0 then mines
         else
-            let point = { Y = rng.Next dimensions.Height; X = rng.Next dimensions.Width }
+            let point = getRandomLocation rng dimensions
             if (List.contains point mines || point = avoidPoint) then 
                 putMine mines minesLeft
             else 
@@ -43,23 +44,23 @@ type Board =
 
 let createEmptyBoard dimension =
     { VisibleCells = Array2D.create dimension.Height dimension.Width Closed
-      HiddenCells = Array2D.create dimension.Height dimension.Width Empty  }
+      HiddenCells = Array2D.create dimension.Height dimension.Width Empty }
 
 exception MineOpened of Location
 
 let openCell board location =
     let visibleCells = Array2D.copy board.VisibleCells
     let rec openCellRec location =
-        visibleCells[location.Y, location.X] <- 
-            match board.HiddenCells[location.Y, location.X] with
-            | Mine -> raise (MineOpened location)
-            | NearMine count -> Opened count
-            | Empty -> Opened 0
+        match board.HiddenCells.GetAt location with
+        | Mine -> raise (MineOpened location)
+        | NearMine count -> Opened count
+        | Empty -> Opened 0
+        |> visibleCells.SetAt location
 
-        if visibleCells[location.Y, location.X] = Opened 0 then
+        if visibleCells.GetAt location = Opened 0 then
             location
             |> getNeigbouringCells board.Dimensions
-            |> List.filter (fun location -> visibleCells[location.Y, location.X] = Closed)
+            |> List.filter (visibleCells.GetAt >> (=) Closed)
             |> List.iter openCellRec
     openCellRec location
 
@@ -68,14 +69,16 @@ let openCell board location =
 let generateValidBoard board minesCount avoidPoint =
     let hiddenCells = Array2D.copy board.HiddenCells
 
-    for mine in (putMines board.Dimensions avoidPoint minesCount) do
-        hiddenCells[mine.Y, mine.X] <- Mine
+    for mineLocation in (putMines board.Dimensions avoidPoint minesCount) do
+        hiddenCells.SetAt mineLocation Mine
     
-        for location in (getNeigbouringCells board.Dimensions mine) do
-            hiddenCells[location.Y, location.X] <- 
-                match hiddenCells[location.Y, location.X] with
-                | Mine -> Mine
-                | NearMine count -> NearMine (count + 1)
-                | Empty -> NearMine 1
+        mineLocation
+        |> getNeigbouringCells board.Dimensions
+        |> Seq.iter (hiddenCells.Update (
+            function
+            | Mine -> Mine
+            | NearMine count -> NearMine count
+            | Empty -> NearMine 1
+        ))
 
     openCell { board with HiddenCells = hiddenCells } avoidPoint

@@ -2,14 +2,7 @@
 open Minesweeper.Utils
 open System
 
-let getCellRepresentation cell =
-    match cell with
-    | Closed -> '#'
-    | Marked -> '+'
-    | Opened 0 -> ' '
-    | Opened n -> char (int '0' + n)
-
-let printBoard (board: Board) =
+let private printBoard (board: Board) =
     let { Height = height; Width = width } = board.Dimensions
     
     Seq.init width id
@@ -21,12 +14,18 @@ let printBoard (board: Board) =
 
     for y in 0..height-1 do
         board.VisibleCells[y, *]
-        |> Seq.map getCellRepresentation
+        |> Seq.map (
+            function
+            | Closed -> '#'
+            | Marked -> '+'
+            | Opened 0 -> ' '
+            | Opened n -> char (int '0' + n)
+        )
         |> Seq.toArray
         |> String
         |> printfn "%d| %s" y
 
-let inputLocation () =
+let private inputLocation () =
     printf "Enter y and x: "
     let rowValues = 
         Console.ReadLine()
@@ -35,7 +34,7 @@ let inputLocation () =
 
     { Y = rowValues.[0]; X = rowValues.[1] }
 
-let playGame dimensions minesCount =
+let private playGame dimensions minesCount =
     let rec gameLoop board =
         Console.Clear()
         printBoard board
