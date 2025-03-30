@@ -20,7 +20,7 @@ let printBoard (board: Board) =
     printfn "-+%s" (String.replicate width "-")
 
     for y in 0..height-1 do
-        board.OvergroundCells[y, *]
+        board.VisibleCells[y, *]
         |> Seq.map getCellRepresentation
         |> Seq.toArray
         |> String
