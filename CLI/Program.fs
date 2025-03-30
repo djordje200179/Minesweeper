@@ -23,7 +23,7 @@ let private printBoard (board: Board) =
         )
         |> Seq.toArray
         |> String
-        |> printfn "%d| %s" y
+        |> printfn "%d|%s" y
 
 let private inputLocation () =
     printf "Enter y and x: "
