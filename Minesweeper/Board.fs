@@ -2,37 +2,13 @@
 
 open System
 open Utils
-
-let private putMines dimensions avoidPoint minesCount =
-    let rng = Random()
-
-    let rec putMine mines minesLeft =
-        if minesLeft = 0 then mines
-        else
-            let point = getRandomLocation rng dimensions
-            if (List.contains point mines || point = avoidPoint) then 
-                putMine mines minesLeft
-            else 
-                putMine (point :: mines) (minesLeft - 1)
-
-    putMine [] minesCount
+open Mines
 
 [<Struct>]
 type VisibleCell =
     | Closed
     | Marked
     | Opened of int
-
-[<Struct>]
-type private HiddenCell =
-    | Mine
-    | NearMine of int
-    | Empty
-
-[<Struct>]
-type private Minefield =
-    | Initialized of minefield: HiddenCell array2d
-    | Uninitialized of minesCount: int
 
 type Board = 
     private
@@ -47,20 +23,13 @@ type Board =
         { Height = Array2D.length1 this.visibleCells
           Width = Array2D.length2 this.visibleCells }
 
-    member this.MarkedCellsCount =
-        this.visibleCells
-        |> Seq.cast<VisibleCell>
-        |> Seq.sumBy ((=) Marked >> Convert.ToInt32)
-
-    member this.TotalMinesCount =
-        match this.minefield with
-        | Uninitialized minesCount -> minesCount
-        | Initialized minefield -> 
-            minefield
-            |> Seq.cast<HiddenCell>
-            |> Seq.sumBy ((=) Mine >> Convert.ToInt32)
-
-    member this.UnmarkedMinesCount = this.TotalMinesCount - this.MarkedCellsCount
+    member this.UnmarkedMinesCount =
+        let markedCellsCount =
+            this.visibleCells
+                |> Seq.cast<VisibleCell>
+                |> Seq.sumBy ((=) Marked >> Convert.ToInt32)
+            
+        getTotalMinesCount this.minefield - markedCellsCount
           
     member this.Item with get location = this.visibleCells.GetAt location
     member this.GetRow y = this.visibleCells[y, *]

@@ -26,11 +26,11 @@ let internal getNeigbouringCells dimensions location =
     |> List.filter (isLocationValid dimensions)
 
 type internal 'T ``[,]`` with
-    member this.GetAt (location: Location) =
+    member this.GetAt location =
         this[location.Y, location.X]
-    member this.SetAt (location: Location) value =
+    member this.SetAt location value =
         this[location.Y, location.X] <- value
-    member this.UpdateAt f (location: Location) =
+    member this.UpdateAt f location =
         this.GetAt location
         |> f
         |> this.SetAt location
