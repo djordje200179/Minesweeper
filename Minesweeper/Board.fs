@@ -39,26 +39,11 @@ exception MineOpened of Location
 let rec openCell board location =
     match board.minefield with
     | Uninitialized minesCount -> 
-        let minefield = Array2D.create board.Dimensions.Height board.Dimensions.Width Empty
+        let minefield = initMinefield board.Dimensions location minesCount
 
-        for mineLocation in (putMines board.Dimensions location minesCount) do
-            minefield.SetAt mineLocation Mine
-    
-            mineLocation
-            |> getNeigbouringCells board.Dimensions
-            |> Seq.iter (minefield.UpdateAt (
-                function
-                | Mine -> Mine
-                | NearMine count -> NearMine (count + 1)
-                | Empty -> NearMine 1
-            ))
-
-        openCell { board with minefield = Initialized minefield } location
+        openCell { board with minefield = minefield } location
     | Initialized minefield ->
         let visibleCells = Array2D.copy board.visibleCells
-
-        if minefield.GetAt location = Mine then
-            raise (MineOpened location)
 
         let rec openCellRec location =
             match minefield.GetAt location with

@@ -3,20 +3,6 @@
 open System
 open Utils
 
-let internal putMines dimensions avoidPoint minesCount =
-    let rng = Random()
-
-    let rec putMine mines minesLeft =
-        if minesLeft = 0 then mines
-        else
-            let point = getRandomLocation rng dimensions
-            if (List.contains point mines || point = avoidPoint) then 
-                putMine mines minesLeft
-            else 
-                putMine (point :: mines) (minesLeft - 1)
-
-    putMine [] minesCount
-
 [<Struct>]
 type internal MinefieldCell =
     | Mine
@@ -34,3 +20,32 @@ let internal getTotalMinesCount = function
         minefield
         |> Seq.cast<MinefieldCell>
         |> Seq.sumBy ((=) Mine >> Convert.ToInt32)
+
+let internal initMinefield dimensions avoidPoint minesCount =
+    let rng = Random()
+
+    let rec putMineRec mines minesLeft =
+        if minesLeft = 0 then mines
+        else
+            let point = getRandomLocation rng dimensions
+            if (List.contains point mines || point = avoidPoint) then 
+                putMineRec mines minesLeft
+            else 
+                putMineRec (point :: mines) (minesLeft - 1)
+
+    let mines = putMineRec [] minesCount
+    
+    let minefield = Array2D.create dimensions.Height dimensions.Width Empty
+    for mineLocation in mines do
+        minefield.SetAt mineLocation Mine
+        
+        mineLocation
+        |> getNeigbouringCells dimensions
+        |> Seq.iter (minefield.UpdateAt (
+            function
+            | Mine -> Mine
+            | NearMine count -> NearMine (count + 1)
+            | Empty -> NearMine 1
+        ))
+
+    Initialized minefield
