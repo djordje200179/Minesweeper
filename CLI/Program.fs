@@ -29,6 +29,7 @@ type private UserAction =
     | Open of Location
     | Mark of Location
 
+[<TailCall>]
 let rec private inputAction () =
     printf "Enter y and x: "
 
@@ -36,11 +37,12 @@ let rec private inputAction () =
     |> _.Split(' ')
     |> function
     | [| y; x |] -> Open { Y = int y; X = int x }
-    | [| y; x; "m"|] -> Mark { Y = int y; X = int x }
+    | [| y; x; "m" |] -> Mark { Y = int y; X = int x }
     | _ -> 
         printfn "Invalid input. Please enter two integers separated by a space."
         inputAction ()
 
+[<TailCall>]
 let rec gameLoop board =
     Console.Clear()
     printBoard board
@@ -53,8 +55,8 @@ let rec gameLoop board =
         | Mark location -> markCell board location
         |> gameLoop
 
-let dimensions = { Height = 10; Width = 10 }
 let minesCount = 10
+let dimensions = { Height = 10; Width = 10 }
 
 try
     Board.Create dimensions minesCount
