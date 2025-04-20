@@ -48,19 +48,19 @@ let rec gameLoop board =
     printBoard board
     printfn "Mines left: %d" board.UnmarkedMinesCount
 
-    if board.UnmarkedMinesCount > 0 then    
+    if board.UnmarkedMinesCount = 0 then Ok ()  
+    else
         inputAction ()
         |> function
             | Open location -> openCell board location
-            | Mark location -> markCell board location
-        |> gameLoop
+            | Mark location -> ((markCell board location) |> Ok)
+        |> Result.bind gameLoop
 
 let minesCount = 10
 let dimensions = { Height = 10; Width = 10 }
 
-try
-    Board.Create dimensions minesCount
-    |> gameLoop
-with
-| MineOpened location ->
-    printfn "Game over! You opened the mine at %O" location
+Board.Create dimensions minesCount
+|> gameLoop
+|> function
+    | Ok board -> printf "You won! You opened all cells without hitting a mine."
+    | Error (MineOpenedError location)  -> printf "Game over! You opened the mine at %O." location

@@ -35,7 +35,8 @@ type Board =
     member this.Item with get location = this.visibleCells.GetFromLocation location
     member this.GetRow y = this.visibleCells[y, *]
 
-exception MineOpened of Location
+[<Struct>]
+type MineOpenedError = MineOpenedError of Location
 
 [<TailCall>]
 let rec openCell board location =
@@ -46,24 +47,25 @@ let rec openCell board location =
         openCell { board with minefield = minefield } location
     | Initialized minefield ->
         let visibleCells = Array2D.copy board.visibleCells
-
+        
         let rec openCellRec location =
-            minefield.GetFromLocation location
-            |> function
-                | Mine -> raise (MineOpened location)
-                | NearMine count -> Opened count
-                | Empty -> Opened 0
-            |> visibleCells.SetAtLocation location
+            match minefield.GetFromLocation location with
+            | Mine -> Error (MineOpenedError location)
+            | NearMine count -> 
+                visibleCells.SetAtLocation location (Opened count)
+                Ok ()
+            | Empty -> 
+                visibleCells.SetAtLocation location (Opened 0)
 
-            if visibleCells.GetFromLocation location = Opened 0 then
                 location
                 |> getNeigbouringLocations board.Dimensions
                 |> Seq.filter (visibleCells.GetFromLocation >> (=) Closed)
-                |> Seq.iter openCellRec
+                |> Seq.map openCellRec
+                |> Seq.tryFind Result.isError
+                |> Option.defaultValue (Ok ())              
 
         openCellRec location
-
-        { board with visibleCells = visibleCells }
+        |> Result.map (fun () -> { board with visibleCells = visibleCells })
 
 let markCell board location =
     let newVisibleCells = Array2D.copy board.visibleCells
