@@ -77,4 +77,4 @@ let markCell board location =
         | other -> other
     |> newVisibleCells.SetAtLocation location
 
-    { board with visibleCells = newVisibleCells }
+    Ok { board with visibleCells = newVisibleCells }

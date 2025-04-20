@@ -25,6 +25,7 @@ let private printBoard (board: Board) =
         |> String
         |> printfn "%d|%s" y
 
+[<Struct>]
 type private UserAction =
     | Open of Location
     | Mark of Location
@@ -53,7 +54,7 @@ let rec gameLoop board =
         inputAction ()
         |> function
             | Open location -> openCell board location
-            | Mark location -> ((markCell board location) |> Ok)
+            | Mark location -> markCell board location
         |> Result.bind gameLoop
 
 let minesCount = 10
