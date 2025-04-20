@@ -36,11 +36,11 @@ let rec private inputAction () =
     Console.ReadLine()
     |> _.Split(' ')
     |> function
-    | [| y; x |] -> Open { Y = int y; X = int x }
-    | [| y; x; "m" |] -> Mark { Y = int y; X = int x }
-    | _ -> 
-        printfn "Invalid input. Please enter two integers separated by a space."
-        inputAction ()
+        | [| y; x |] -> Open { Y = int y; X = int x }
+        | [| y; x; "m" |] -> Mark { Y = int y; X = int x }
+        | _ -> 
+            printfn "Invalid input. Please enter two integers separated by a space."
+            inputAction ()
 
 [<TailCall>]
 let rec gameLoop board =
@@ -51,8 +51,8 @@ let rec gameLoop board =
     if board.UnmarkedMinesCount > 0 then    
         inputAction ()
         |> function
-        | Open location -> openCell board location
-        | Mark location -> markCell board location
+            | Open location -> openCell board location
+            | Mark location -> markCell board location
         |> gameLoop
 
 let minesCount = 10

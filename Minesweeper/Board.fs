@@ -27,8 +27,8 @@ type Board =
     member this.UnmarkedMinesCount =
         let markedCellsCount =
             this.visibleCells
-                |> Seq.cast<VisibleCell>
-                |> Seq.sumBy ((=) Marked >> Convert.ToInt32)
+            |> Seq.cast<VisibleCell>
+            |> Seq.sumBy ((=) Marked >> Convert.ToInt32)
             
         this.minefield.TotalMinesCount - markedCellsCount
           
