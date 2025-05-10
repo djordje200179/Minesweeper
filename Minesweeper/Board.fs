@@ -16,7 +16,7 @@ type Board =
         { visibleCells: VisibleCell array2d
           minefield: Minefield }
       
-    static member inline Create dimensions minesCount =
+    static member Create dimensions minesCount =
         { visibleCells = Array2D.create dimensions.Height dimensions.Width Closed
           minefield = Uninitialized minesCount }
 
@@ -24,8 +24,8 @@ type Board =
         { Height = Array2D.length1 this.visibleCells
           Width = Array2D.length2 this.visibleCells }
           
-    member inline this.Item with get location = this.visibleCells.GetFromLocation location
-    member inline this.GetRow y = this.visibleCells[y, *]
+    member this.Item with get location = this.visibleCells.GetFromLocation location
+    member this.GetRow y = this.visibleCells[y, *]
 
 let getUnmarkedMinesCount board =
     let markedCellsCount =
