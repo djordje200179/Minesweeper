@@ -16,24 +16,26 @@ type Board =
         { visibleCells: VisibleCell array2d
           minefield: Minefield }
       
-    static member Create dimensions minesCount =
+    static member inline Create dimensions minesCount =
         { visibleCells = Array2D.create dimensions.Height dimensions.Width Closed
           minefield = Uninitialized minesCount }
 
     member this.Dimensions =
         { Height = Array2D.length1 this.visibleCells
           Width = Array2D.length2 this.visibleCells }
-
-    member this.UnmarkedMinesCount =
-        let markedCellsCount =
-            this.visibleCells
-            |> Seq.cast<VisibleCell>
-            |> Seq.sumBy ((=) Marked >> Convert.ToInt32)
-            
-        this.minefield.TotalMinesCount - markedCellsCount
           
-    member this.Item with get location = this.visibleCells.GetFromLocation location
-    member this.GetRow y = this.visibleCells[y, *]
+    member inline this.Item with get location = this.visibleCells.GetFromLocation location
+    member inline this.GetRow y = this.visibleCells[y, *]
+
+let getUnmarkedMinesCount board =
+    let markedCellsCount =
+        board.visibleCells
+        |> Seq.cast<VisibleCell>
+        |> Seq.sumBy ((=) Marked >> Convert.ToInt32)
+            
+    let totalMinesCount = Minefield.getTotalMinesCount board.minefield
+
+    totalMinesCount - markedCellsCount
 
 [<Struct>]
 type MineOpenedError = MineOpenedError of Location
@@ -42,7 +44,7 @@ type MineOpenedError = MineOpenedError of Location
 let rec openCell board location =
     match board.minefield with
     | Uninitialized minesCount -> 
-        let minefield = initMinefield board.Dimensions location minesCount
+        let minefield = Minefield.init board.Dimensions location minesCount
 
         openCell { board with minefield = minefield } location
     | Initialized minefield ->
@@ -58,7 +60,7 @@ let rec openCell board location =
                 visibleCells.SetAtLocation location (Opened 0)
 
                 location
-                |> getNeigbouringLocations board.Dimensions
+                |> Location.getNeighbouring board.Dimensions
                 |> Seq.filter (visibleCells.GetFromLocation >> (=) Closed)
                 |> Seq.map openCellRec
                 |> Seq.tryFind Result.isError
@@ -77,4 +79,4 @@ let markCell board location =
         | other -> other
     |> newVisibleCells.SetAtLocation location
 
-    Ok { board with visibleCells = newVisibleCells }
+    { board with visibleCells = newVisibleCells }

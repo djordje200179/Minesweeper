@@ -9,6 +9,7 @@
     <Compile Include="Utils.fs" />
     <Compile Include="Mines.fs" />
     <Compile Include="Board.fs" />
+    <Compile Include="Game.fs" />
   </ItemGroup>
 
 </Project>
