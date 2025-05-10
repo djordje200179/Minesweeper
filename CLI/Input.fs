@@ -26,15 +26,11 @@ let rec private readLocation validityChecker =
 
 [<TailCall>]
 let rec readAction locationChecker historyExists =
-    let mutable actions = Map [
+    [ 
         ('o', "open");
-        ('m', "mark");
+        ('m', "mark") 
     ]
-    if historyExists then
-        actions <- Map.add 'u' "undo" actions
-
-    actions
-    |> Map.toSeq
+    |> Seq.append (if historyExists then Seq.singleton ('u', "undo") else Seq.empty)
     |> Seq.map (fun (k, v) -> sprintf "'%c' for %s" k v)
     |> String.concat ", "
     |> printfn "Enter action (%s): "
