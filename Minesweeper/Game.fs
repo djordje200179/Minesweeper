@@ -15,7 +15,7 @@ let rec gameLoop (stateOutput, actionInput) previousBoards board =
 
     if leftMinesCount = 0 then Ok ()  
     else
-        (Location.isValid board.Dimensions, List.isEmpty previousBoards)
+        (Location.isValid board.Dimensions, (List.isEmpty >> not) previousBoards)
         ||> actionInput
         |> function
             | Open location -> openCell board location
